@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useTouch } from '../db/settings';
+import { touchInput } from '../game/touchInput';
 import { ITEMS, QUICK_ITEMS } from '../data/items';
 import { MAPS } from '../data/maps';
 import { useGame, useGameData } from '../state/gameStore';
@@ -14,7 +16,7 @@ function Vitals() {
   const showMp = data.abilities.bolt;
   const need = xpToNext(data.level);
   return (
-    <div className="pixel-panel w-64 p-2.5">
+    <div className="pixel-panel w-56 p-2 sm:w-64 sm:p-2.5">
       <div className="mb-1.5 flex items-baseline justify-between">
         <span className="text-shadow text-base text-parchment">{data.playerName}</span>
         <span className="font-tiny text-[11px] text-ember-hi">LV {data.level}</span>
@@ -54,22 +56,32 @@ function TopRight() {
         <Icon frame="coin_0" size={16} />
         <span className="text-shadow text-lg text-ember-hi">{gold}</span>
       </div>
-      <div className="text-shadow text-sm text-dim">{zone ? MAPS[zone].name : ''}</div>
+      <div className="text-shadow text-sm text-dim touch:hidden">{zone ? MAPS[zone].name : ''}</div>
       {saving && <div className="text-shadow animate-pulse text-xs text-ember">Saving…</div>}
     </div>
   );
 }
 
-function QuickItems() {
+function QuickItems({ compact = false }: { compact?: boolean }) {
   const inv = useGame((d) => d.inventory);
   if (!inv) return null;
+  const size = compact ? 'h-10 w-10' : 'h-12 w-12';
   return (
     <div className="flex gap-2">
       {QUICK_ITEMS.map((id, i) => {
         const n = inv[id] ?? 0;
         return (
-          <div key={id} className={`pixel-panel relative flex h-12 w-12 items-center justify-center ${n ? '' : 'opacity-40'}`} title={ITEMS[id].name}>
-            <Icon frame={ITEMS[id].icon} size={32} />
+          <div
+            key={id}
+            className={`pixel-panel pointer-events-auto relative flex ${size} cursor-pointer items-center justify-center ${n ? '' : 'opacity-40'}`}
+            title={ITEMS[id].name}
+            style={{ touchAction: 'none' }}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              touchInput.press(`potion${i + 1}` as 'potion1');
+            }}
+          >
+            <Icon frame={ITEMS[id].icon} size={compact ? 26 : 32} />
             <span className="absolute -top-1.5 -left-1.5">
               <Kbd>{i + 1}</Kbd>
             </span>
@@ -110,8 +122,8 @@ function BossBar() {
   const boss = useUI((s) => s.boss);
   if (!boss) return null;
   return (
-    <div className="absolute inset-x-0 top-4 z-10 flex animate-rise justify-center px-4">
-      <div className="w-full max-w-xl text-center">
+    <div className="absolute inset-x-0 top-[8.5rem] z-10 flex animate-rise justify-center px-4 touch:top-[11.5rem] lg:top-4 lg:touch:top-4">
+      <div className="w-full max-w-md text-center lg:max-w-xl">
         <div className="glow-ember mb-1 text-xl text-ember-hi">{boss.name}</div>
         <Bar value={boss.hp} max={boss.maxHp} color="linear-gradient(180deg,#e86a4a,#a02a3a)" height={14} />
       </div>
@@ -122,7 +134,7 @@ function BossBar() {
 function Toasts() {
   const toasts = useUI((s) => s.toasts);
   return (
-    <div className="pointer-events-none absolute top-24 right-4 z-20 flex w-72 flex-col items-end gap-2">
+    <div className="pointer-events-none absolute inset-x-4 top-36 z-20 flex flex-col items-center gap-2 sm:inset-x-auto sm:top-24 sm:right-4 sm:w-72 sm:items-end touch:top-[11rem] sm:touch:top-36">
       {toasts.map((t) => (
         <div key={t.id} className={`pixel-panel flex animate-rise items-center gap-2 px-3 py-2 text-sm ${t.kind === 'level' ? 'text-ember-hi' : t.kind === 'quest' ? 'text-flame' : t.kind === 'warn' ? 'text-blood' : 'text-parchment'}`}>
           {t.icon && <Icon frame={t.icon} size={20} />}
@@ -140,7 +152,7 @@ function Banner() {
   if (!banner) return null;
   return (
     <div key={banner.id} className="pointer-events-none absolute inset-x-0 top-[22%] z-10 flex animate-rise flex-col items-center text-center">
-      <div className="glow-ember text-4xl text-ember-hi sm:text-5xl">{banner.title}</div>
+      <div className="glow-ember px-4 text-3xl text-ember-hi sm:text-5xl">{banner.title}</div>
       {banner.subtitle && <div className="text-shadow mt-2 max-w-xl px-4 text-lg text-parchment/90">{banner.subtitle}</div>}
     </div>
   );
@@ -171,28 +183,41 @@ function HurtFlash() {
 
 export function Hud() {
   const modal = useUI((s) => s.modal);
-  const hidden = modal === 'ending';
-  if (hidden) return null;
+  const touch = useTouch();
+  if (modal === 'ending') return null;
   return (
     <div className="pointer-events-none absolute inset-0 z-10 select-none">
       <div className="vignette absolute inset-0" />
       <HurtFlash />
-      <div className="absolute top-4 left-4">
-        <Vitals />
+      <div className="safe-pad absolute inset-0">
+        <div className="relative h-full w-full">
+          <div className="absolute top-3 left-3 sm:top-4 sm:left-4">
+            <Vitals />
+            {touch && (
+              <div className="mt-3">
+                <QuickItems compact />
+              </div>
+            )}
+          </div>
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
+            <TopRight />
+          </div>
+          {!touch && (
+            <>
+              <div className="absolute bottom-4 left-4">
+                <QuickItems />
+              </div>
+              <div className="absolute right-4 bottom-4">
+                <Abilities />
+              </div>
+            </>
+          )}
+          <BossBar />
+          <Banner />
+          {!touch && <Prompt />}
+          <Toasts />
+        </div>
       </div>
-      <div className="absolute top-4 right-4">
-        <TopRight />
-      </div>
-      <div className="absolute bottom-4 left-4">
-        <QuickItems />
-      </div>
-      <div className="absolute right-4 bottom-4">
-        <Abilities />
-      </div>
-      <BossBar />
-      <Banner />
-      <Prompt />
-      <Toasts />
     </div>
   );
 }

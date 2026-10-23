@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* `touch:` applies when on-screen touch controls are enabled. */
+@custom-variant touch (&:where(.touch, .touch *));
+
 @theme {
   --font-pixel: 'Pixelify Sans', 'Silkscreen', ui-monospace, monospace;
   --font-tiny: 'Silkscreen', 'Pixelify Sans', ui-monospace, monospace;
@@ -70,6 +73,19 @@
 }
 
 html,
+body {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+html.touch,
+html.touch body {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
 body,
 #root {
   height: 100%;
@@ -90,8 +106,22 @@ button {
   font-feature-settings: 'liga' 0, 'clig' 0;
 }
 
+#root {
+  height: 100dvh;
+}
+
 canvas {
   display: block;
+}
+
+/* Keyboard hints make no sense with a finger. */
+.touch .kbd,
+.touch .kbd-hint {
+  display: none !important;
+}
+
+.safe-pad {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 .pixelated {

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ITEMS, isEquipment, sellPrice } from '../data/items';
 import { SHOPS } from '../data/shops';
+import { useTouch } from '../db/settings';
 import { sfx } from '../game/audio';
 import { game, useGameData } from '../state/gameStore';
 import { ui, useUI } from '../state/uiStore';
@@ -10,6 +11,7 @@ import { compare, statLine } from './InventoryMenu';
 export function ShopMenu() {
   const shopId = useUI((s) => s.shopId);
   const data = useGameData();
+  const touch = useTouch();
   const [mode, setMode] = useState<'buy' | 'sell'>('buy');
   const [index, setIndex] = useState(0);
   const [flash, setFlash] = useState<string | null>(null);
@@ -84,7 +86,7 @@ export function ShopMenu() {
         <div className="pixel-inset flex h-14 w-14 items-center justify-center bg-night">
           <Icon frame={`${shop.portrait}_down_idle`} size={44} />
         </div>
-        <p className="flex-1 text-lg italic">“{flash ?? shop.greeting}”</p>
+        <p className="flex-1 text-base italic sm:text-lg">“{flash ?? shop.greeting}”</p>
         <div className="pixel-panel flex items-center gap-2 px-3 py-1.5">
           <Icon frame="coin_0" size={16} />
           <span className="text-lg text-ember-hi">{data.gold}</span>
@@ -116,9 +118,9 @@ export function ShopMenu() {
             return (
               <div
                 key={r.def.id}
-                onMouseEnter={() => setIndex(i)}
-                onClick={() => act(i)}
-                className={`flex cursor-pointer items-center gap-3 px-2 py-1.5 ${i === index ? 'bg-panel-2 text-ember-hi' : ''} ${cantAfford || owned ? 'opacity-50' : ''}`}
+                onMouseEnter={() => !touch && setIndex(i)}
+                onClick={() => (touch ? setIndex(i) : act(i))}
+                className={`flex cursor-pointer items-center gap-3 px-2 py-1.5 touch:py-2.5 ${i === index ? 'bg-panel-2 text-ember-hi' : ''} ${cantAfford || owned ? 'opacity-50' : ''}`}
               >
                 <Icon frame={r.def.icon} size={24} />
                 <span className="flex-1">{r.def.name}</span>
@@ -145,13 +147,16 @@ export function ShopMenu() {
                   ))}
               </div>
               {!isEquipment(sel.def) && <div className="mt-2 text-sm text-dim">You have {data.inventory[sel.def.id] ?? 0}.</div>}
+              <button type="button" tabIndex={-1} className="pixel-btn mt-3 cursor-pointer px-4 py-1.5 text-sm text-ember-hi" onClick={() => act(Math.min(index, rows.length - 1))}>
+                {mode === 'buy' ? `Buy for ${sel.price}g` : `Sell for ${sel.price}g`}
+              </button>
             </>
           ) : (
             <span className="text-dim">-</span>
           )}
         </div>
       </div>
-      <p className="mt-3 text-sm text-dim">
+      <p className="kbd-hint mt-3 text-sm text-dim">
         <Kbd>←</Kbd>
         <Kbd>→</Kbd> buy/sell · <Kbd>Enter</Kbd> {mode} · <Kbd>Esc</Kbd> leave
       </p>

@@ -27,7 +27,8 @@ import { TERRAIN } from '../world/legend';
 import { tileAt, type TilePos } from '../world/parse';
 import { TILE } from '../world/render';
 import type { ShotOptions, World } from '../world/types';
-import { fitZoom } from './zoom';
+import { settingsStore } from '../../db/settings';
+import { fitZoom, followOffsetY } from './zoom';
 
 interface Interactable {
   x: number;
@@ -237,7 +238,7 @@ export class WorldScene extends Phaser.Scene implements World {
     const cam = this.cameras.main;
     cam.setBounds(0, 0, this.level.width, this.level.height);
     cam.startFollow(this.player, false, 0.14, 0.14);
-    cam.setZoom(fitZoom(this));
+    this.onResize();
     cam.setBackgroundColor('#0b0a12');
     cam.fadeIn(350, 11, 10, 18);
     this.scale.on('resize', this.onResize, this);
@@ -263,6 +264,7 @@ export class WorldScene extends Phaser.Scene implements World {
         this.talkingTo = undefined;
       }),
     );
+    this.unsub.push(settingsStore.subscribe(() => this.onResize()));
     this.events.once('shutdown', () => this.cleanup());
 
     playMusic(this.level.map.def.music);
@@ -281,7 +283,10 @@ export class WorldScene extends Phaser.Scene implements World {
   }
 
   private onResize() {
-    this.cameras.main.setZoom(fitZoom(this));
+    const cam = this.cameras.main;
+    const zoom = fitZoom(this);
+    cam.setZoom(zoom);
+    cam.setFollowOffset(0, followOffsetY(this, zoom));
   }
 
   private cleanup() {

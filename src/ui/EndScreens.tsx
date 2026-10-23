@@ -19,7 +19,7 @@ export function GameOver() {
   return (
     <div className="absolute inset-0 z-40 flex animate-fade items-center justify-center bg-[radial-gradient(ellipse_at_center,rgb(40,8,16,0.75),rgb(5,3,8,0.95))] p-4">
       <div className="flex animate-rise flex-col items-center text-center">
-        <h2 className="glow-ember mb-2 text-5xl text-blood">The Gloam takes you…</h2>
+        <h2 className="glow-ember mb-2 text-4xl text-blood sm:text-5xl">The Gloam takes you…</h2>
         <p className="text-shadow mb-8 max-w-md text-lg text-parchment/80">…but the Hearthlight remembers you. You'll wake at the edge of {MAPS[data.entry.zone].name}, a little poorer and a lot wiser.</p>
         <div className="flex w-64 flex-col gap-3">
           {options.map((o, i) => (
@@ -71,15 +71,15 @@ export function Ending() {
   if (!data) return null;
   const s = data.stats;
   return (
-    <div className="absolute inset-0 z-50 flex animate-fade items-center justify-center overflow-y-auto bg-[linear-gradient(180deg,#2a1830_0%,#7a4a5a_45%,#f2b07a_100%)] p-4">
-      <Panel className="w-full max-w-2xl animate-rise p-6 text-center">
+    <div className="safe-pad absolute inset-0 z-50 flex animate-fade flex-col items-center overflow-y-auto bg-[linear-gradient(180deg,#2a1830_0%,#7a4a5a_45%,#f2b07a_100%)] p-4">
+      <Panel className="my-auto w-full max-w-2xl animate-rise p-4 text-center sm:p-6">
         <div className="mb-3 flex justify-center gap-3">
           <Icon frame="icon_ember_green" size={36} className="animate-flicker" />
           <Icon frame="icon_ember_stone" size={36} className="animate-flicker" />
           <Icon frame="icon_ember_blue" size={36} className="animate-flicker" />
         </div>
-        <h2 className="glow-ember mb-4 text-5xl text-ember-hi">Dawn</h2>
-        <div className="mx-auto mb-5 max-w-xl space-y-3 text-lg leading-relaxed text-parchment/90">
+        <h2 className="glow-ember mb-4 text-4xl text-ember-hi sm:text-5xl">Dawn</h2>
+        <div className="mx-auto mb-5 max-w-xl space-y-3 text-base leading-relaxed text-parchment/90 sm:text-lg">
           <p>The sun came up over Emberhold for the first time in living memory, and nobody quite knew what to do about it.</p>
           <p>Maren sat on the steps of the shrine and wept, and then told everyone she hadn't. Bram hammered a crown into a horseshoe. Ivo sold out of sun-cream he had invented that morning. Whiskers slept in the warmest patch of light in the valley, as was his right.</p>
           <p>The Hearthlight still burns. It always will. But it doesn't have to burn alone any more.</p>
@@ -117,7 +117,7 @@ export function Ending() {
             </button>
           ))}
         </div>
-        <p className="mt-3 text-sm text-dim">
+        <p className="kbd-hint mt-3 text-sm text-dim">
           <Kbd>Enter</Kbd> choose
         </p>
       </Panel>

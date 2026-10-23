@@ -19,6 +19,8 @@ export function PhaserGame() {
       physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 0 }, debug: false } },
       scene: [BootScene, TitleScene, WorldScene],
       audio: { noAudio: true },
+      // The React overlay handles touch; Phaser only needs the keyboard.
+      input: { keyboard: true, mouse: false, touch: false, gamepad: false },
       disableContextMenu: true,
       banner: false,
     });

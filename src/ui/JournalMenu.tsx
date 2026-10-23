@@ -35,13 +35,14 @@ export function JournalMenu() {
   return (
     <ModalShell title="Journal" onClose={() => ui.close()} width={860}>
       <div className="flex min-h-0 flex-col gap-4 md:flex-row">
-        <div className="pixel-inset scroll-thin w-full shrink-0 overflow-y-auto p-1 md:w-72" style={{ maxHeight: 380 }}>
+        <div className="pixel-inset scroll-thin w-full shrink-0 overflow-y-auto p-1 md:w-72" style={{ maxHeight: 'min(380px, 32vh)' }}>
           {entries.length === 0 && <div className="p-3 text-dim italic">No quests yet.</div>}
           {entries.map((q, i) => (
             <div
               key={q.id}
               onMouseEnter={() => setIndex(i)}
-              className={`flex cursor-default items-center gap-2 px-2 py-1.5 ${i === index ? 'bg-panel-2' : ''} ${q.state.status === 'complete' ? 'text-dim' : q.def.main ? 'text-ember-hi' : 'text-parchment'}`}
+              onClick={() => setIndex(i)}
+              className={`flex cursor-pointer items-center touch:py-2.5 gap-2 px-2 py-1.5 ${i === index ? 'bg-panel-2' : ''} ${q.state.status === 'complete' ? 'text-dim' : q.def.main ? 'text-ember-hi' : 'text-parchment'}`}
             >
               <span className="w-4 text-center">{q.state.status === 'complete' ? '✓' : q.def.main ? '✦' : '•'}</span>
               <span className={q.state.status === 'complete' ? 'line-through decoration-dim/60' : ''}>{q.def.title}</span>
@@ -84,11 +85,11 @@ export function JournalMenu() {
           )}
         </div>
       </div>
-      <div className="mt-3 flex justify-between text-sm text-dim">
+      <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm text-dim">
         <span>
           Played {formatTime(data.stats.playtimeMs)} · Foes felled {data.stats.kills} · Falls {data.stats.deaths}
         </span>
-        <span>
+        <span className="kbd-hint">
           <Kbd>↑</Kbd>
           <Kbd>↓</Kbd> browse · <Kbd>Esc</Kbd> close
         </span>

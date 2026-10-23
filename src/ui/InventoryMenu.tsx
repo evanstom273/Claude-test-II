@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ITEMS, isEquipment, type EquipSlot, type ItemDef } from '../data/items';
+import { useTouch } from '../db/settings';
 import { sfx } from '../game/audio';
 import { game, useGameData } from '../state/gameStore';
 import { derivedStats, xpToNext } from '../state/progression';
@@ -52,6 +53,7 @@ export function compare(def: ItemDef, equippedId: string | null | undefined) {
 
 export function InventoryMenu() {
   const data = useGameData();
+  const touch = useTouch();
   const [tab, setTab] = useState<Tab>('gear');
   const [index, setIndex] = useState(0);
 
@@ -189,7 +191,7 @@ export function InventoryMenu() {
               </button>
             ))}
           </div>
-          <div className="pixel-inset scroll-thin min-h-48 flex-1 overflow-y-auto p-1" style={{ maxHeight: 300 }}>
+          <div className="pixel-inset scroll-thin min-h-40 flex-1 overflow-y-auto p-1" style={{ maxHeight: 300 }}>
             {items.length === 0 && <div className="p-3 text-dim italic">Nothing here yet.</div>}
             {items.map((it, i) => {
               const def = it.def;
@@ -197,9 +199,9 @@ export function InventoryMenu() {
               return (
                 <div
                   key={def.id}
-                  onMouseEnter={() => setIndex(i)}
-                  onClick={() => activate(i)}
-                  className={`flex cursor-pointer items-center gap-3 px-2 py-1.5 ${i === index ? 'bg-panel-2 text-ember-hi' : ''}`}
+                  onMouseEnter={() => !touch && setIndex(i)}
+                  onClick={() => (touch ? setIndex(i) : activate(i))}
+                  className={`flex cursor-pointer items-center gap-3 px-2 py-1.5 touch:py-2.5 ${i === index ? 'bg-panel-2 text-ember-hi' : ''}`}
                 >
                   <Icon frame={def.icon} size={24} />
                   <span className="flex-1">{def.name}</span>
@@ -217,6 +219,11 @@ export function InventoryMenu() {
                   <span className="text-sm text-dim">{statLine(sel.def)}</span>
                 </div>
                 <p className="text-sm text-parchment/90">{sel.def.desc}</p>
+                {(isEquipment(sel.def) || sel.def.kind === 'consumable') && (
+                  <button type="button" tabIndex={-1} className="pixel-btn mt-2 cursor-pointer px-4 py-1.5 text-sm text-ember-hi" onClick={() => activate(Math.min(index, items.length - 1))}>
+                    {isEquipment(sel.def) ? (data.equipment[sel.def.kind] === sel.def.id ? (sel.def.kind === 'weapon' ? 'Equipped' : 'Unequip') : 'Equip') : 'Use'}
+                  </button>
+                )}
                 <div className="mt-1 flex gap-3 text-sm">
                   {isEquipment(sel.def) &&
                     compare(sel.def, data.equipment[sel.def.kind]).map((c) => (
@@ -231,7 +238,7 @@ export function InventoryMenu() {
               <span className="text-dim">-</span>
             )}
           </div>
-          <p className="mt-2 text-sm text-dim">
+          <p className="kbd-hint mt-2 text-sm text-dim">
             <Kbd>←</Kbd>
             <Kbd>→</Kbd> tabs · <Kbd>Enter</Kbd> {tab === 'gear' ? 'equip' : tab === 'items' ? 'use' : 'inspect'} · <Kbd>Esc</Kbd> close
           </p>

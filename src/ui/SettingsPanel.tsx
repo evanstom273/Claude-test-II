@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { updateSettings, useSettings, type Settings } from '../db/settings';
+import { updateSettings, useSettings, useTouch, type Settings } from '../db/settings';
 import { sfx } from '../game/audio';
 import { Kbd, useKeys } from './common';
 
@@ -10,6 +10,7 @@ const ROWS: Row[] = [
   { key: 'sfxVolume', label: 'Sound effects', kind: 'volume' },
   { key: 'screenShake', label: 'Screen shake', kind: 'toggle' },
   { key: 'damageNumbers', label: 'Damage numbers', kind: 'toggle' },
+  { key: 'touchControls', label: 'Touch controls', kind: 'toggle' },
 ];
 
 export function SettingsPanel({ onBack }: { onBack: () => void }) {
@@ -47,7 +48,7 @@ export function SettingsPanel({ onBack }: { onBack: () => void }) {
             <span>{r.label}</span>
             {r.kind === 'volume' ? (
               <div className="flex items-center gap-2">
-                <button type="button" tabIndex={-1} className="cursor-pointer px-1 text-dim hover:text-parchment" onClick={() => adjust(r, -1)}>
+                <button type="button" tabIndex={-1} className="cursor-pointer px-1 text-dim hover:text-parchment touch:px-3 touch:py-1 touch:text-xl" onClick={() => adjust(r, -1)}>
                   ◂
                 </button>
                 <div className="flex gap-0.5">
@@ -55,19 +56,19 @@ export function SettingsPanel({ onBack }: { onBack: () => void }) {
                     <div key={j} className={`h-3 w-2.5 ${j < Math.round((v as number) * 10) ? 'bg-ember' : 'bg-ink'}`} />
                   ))}
                 </div>
-                <button type="button" tabIndex={-1} className="cursor-pointer px-1 text-dim hover:text-parchment" onClick={() => adjust(r, 1)}>
+                <button type="button" tabIndex={-1} className="cursor-pointer px-1 text-dim hover:text-parchment touch:px-3 touch:py-1 touch:text-xl" onClick={() => adjust(r, 1)}>
                   ▸
                 </button>
               </div>
             ) : (
-              <button type="button" tabIndex={-1} className="cursor-pointer" onClick={() => adjust(r, 1)}>
+              <button type="button" tabIndex={-1} className="pixel-btn min-w-16 cursor-pointer px-3 py-1 text-center" onClick={() => adjust(r, 1)}>
                 {v ? 'On' : 'Off'}
               </button>
             )}
           </div>
         );
       })}
-      <p className="mt-2 text-sm text-dim">
+      <p className="kbd-hint mt-2 text-sm text-dim">
         <Kbd>↑</Kbd>
         <Kbd>↓</Kbd> choose · <Kbd>←</Kbd>
         <Kbd>→</Kbd> adjust · <Kbd>Esc</Kbd> back
@@ -77,6 +78,26 @@ export function SettingsPanel({ onBack }: { onBack: () => void }) {
 }
 
 export function ControlsList() {
+  const touch = useTouch();
+  if (touch) {
+    return (
+      <div className="flex flex-col gap-2 text-parchment">
+        <p>
+          <span className="text-ember-hi">Left thumb:</span> touch anywhere on the left half of the screen to move. Push further to run.
+        </p>
+        <p>
+          <span className="text-ember-hi">Right thumb:</span> the big sword attacks (hold to keep swinging). The smaller buttons are Ember Bolt, Ember Dash and Radiance once you've earned them.
+        </p>
+        <p>
+          <span className="text-ember-hi">Talk, open, read:</span> a glowing button pops up above the sword when there's something to interact with.
+        </p>
+        <p>
+          <span className="text-ember-hi">Potions:</span> tap them under your health bar. Bag, journal, map and pause are top right.
+        </p>
+        <p className="text-dim">A keyboard works too. Touch controls can be switched off in Settings.</p>
+      </div>
+    );
+  }
   const rows: [string, string[]][] = [
     ['Move', ['W A S D', 'Arrows']],
     ['Attack (three-hit combo)', ['J', 'Space']],

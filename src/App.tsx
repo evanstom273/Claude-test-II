@@ -15,6 +15,8 @@ import { MapMenu } from './ui/MapMenu';
 import { PauseMenu } from './ui/PauseMenu';
 import { ShopMenu } from './ui/ShopMenu';
 import { TitleScreen } from './ui/TitleScreen';
+import { TouchControls } from './ui/TouchControls';
+import { useTouch } from './db/settings';
 
 if (import.meta.env.DEV) {
   (window as unknown as Record<string, unknown>).__hearth = {
@@ -33,6 +35,7 @@ if (import.meta.env.DEV) {
 export function App() {
   const screen = useUI((s) => s.screen);
   const modal = useUI((s) => s.modal);
+  const touch = useTouch();
 
   useEffect(() => {
     if (screen === 'title') showTitleScene();
@@ -72,12 +75,13 @@ export function App() {
   );
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-ink">
+    <div className="relative h-full w-full overflow-hidden bg-ink" onContextMenu={(e) => e.preventDefault()}>
       <PhaserGame />
       {screen === 'title' && <TitleScreen />}
       {screen === 'game' && (
         <>
           <Hud />
+          {touch && <TouchControls />}
           {modal === 'pause' && <PauseMenu />}
           {modal === 'inventory' && <InventoryMenu />}
           {modal === 'journal' && <JournalMenu />}

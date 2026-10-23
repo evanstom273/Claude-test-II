@@ -3,7 +3,7 @@ import { normLine, type Choice, type Dialogue } from '../data/dialogue';
 import { sfx } from '../game/audio';
 import { bus } from '../state/bus';
 import { ui, uiStore, useUI } from '../state/uiStore';
-import { Icon, Kbd, useKeys } from './common';
+import { Icon, Kbd, useKeys, useViewport } from './common';
 
 function finish(node: Dialogue, run?: () => void) {
   const before = uiStore.getState().dialogue;
@@ -24,6 +24,8 @@ export function DialogueBox() {
   const dlg = useUI((s) => s.dialogue);
   const [chars, setChars] = useState(0);
   const [choice, setChoice] = useState(0);
+  const { w } = useViewport();
+  const small = w < 640;
 
   const node = dlg?.node;
   const line = node ? normLine(node.lines[dlg!.line] ?? '') : null;
@@ -121,16 +123,16 @@ export function DialogueBox() {
   const portrait = line.portrait ?? (line.who === undefined ? dlg.portrait : undefined);
 
   return (
-    <div className="absolute inset-x-0 bottom-0 z-40 flex justify-center p-4 sm:p-6" onClick={advance}>
-      <div className="pixel-panel flex w-full max-w-3xl animate-rise gap-4 p-4">
+    <div className="safe-pad absolute inset-x-0 bottom-0 z-40 flex justify-center" onClick={advance}>
+      <div className="pixel-panel m-3 flex w-full max-w-3xl animate-rise gap-3 p-3 sm:m-6 sm:gap-4 sm:p-4">
         {portrait && !narration && (
-          <div className="pixel-inset flex h-24 w-24 shrink-0 items-center justify-center bg-night">
-            <Icon frame={portrait} size={portrait.endsWith('_0') && /thornmother|colossus|abbess|hollow/.test(portrait) ? 80 : 72} />
+          <div className="pixel-inset flex h-16 w-16 shrink-0 items-center justify-center bg-night sm:h-24 sm:w-24">
+            <Icon frame={portrait} size={(portrait.endsWith('_0') && /thornmother|colossus|abbess|hollow/.test(portrait) ? 80 : 72) * (small ? 0.7 : 1)} />
           </div>
         )}
-        <div className="min-h-24 flex-1">
-          {speaker && !narration && <div className="mb-1 text-lg text-ember-hi text-shadow">{speaker}</div>}
-          <p className={`text-lg leading-snug ${narration ? 'italic text-dim' : 'text-parchment'}`}>
+        <div className="min-h-20 flex-1 sm:min-h-24">
+          {speaker && !narration && <div className="text-shadow mb-1 text-base text-ember-hi sm:text-lg">{speaker}</div>}
+          <p className={`text-base leading-snug sm:text-lg ${narration ? 'italic text-dim' : 'text-parchment'}`}>
             {text.slice(0, chars)}
             <span className="opacity-0">{text.slice(chars)}</span>
           </p>
@@ -146,7 +148,7 @@ export function DialogueBox() {
                     pick(i);
                   }}
                   onMouseEnter={() => setChoice(i)}
-                  className={`cursor-pointer px-2 py-1 text-left text-base ${i === choice ? 'bg-panel-2 text-ember-hi' : 'text-parchment'}`}
+                  className={`cursor-pointer px-2 py-1 text-left text-base touch:py-2.5 ${i === choice ? 'bg-panel-2 text-ember-hi' : 'text-parchment'}`}
                 >
                   <span className="mr-2 inline-block w-3">{i === choice ? '▸' : ''}</span>
                   {c.label}
@@ -158,6 +160,7 @@ export function DialogueBox() {
             <div className="mt-2 text-right text-xs text-dim">
               <span className="inline-block animate-bob">
                 <Kbd>E</Kbd>
+                <span className="hidden text-ember-hi touch:inline">▼ tap</span>
               </span>
             </div>
           )}

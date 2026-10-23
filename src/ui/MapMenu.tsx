@@ -7,7 +7,7 @@ import { useGameData } from '../state/gameStore';
 import { worldBridge } from '../state/session';
 import type { ZoneId } from '../state/types';
 import { ui } from '../state/uiStore';
-import { Kbd, ModalShell, useKeys } from './common';
+import { Kbd, ModalShell, useKeys, useViewport } from './common';
 
 const ZONES: ZoneId[] = ['village', 'whisperwood', 'hollowdeep', 'saltmere', 'rift'];
 
@@ -29,6 +29,7 @@ export function MapMenu() {
   const [blink, setBlink] = useState(true);
   const zone = data?.zone ?? 'village';
   const map = useMemo(() => parseMap(MAPS[zone]), [zone]);
+  const vp = useViewport();
 
   useKeys((e) => {
     if (e.key === 'Escape' || e.key === 'm' || e.key === 'M') {
@@ -85,15 +86,19 @@ export function MapMenu() {
 
   if (!data) return null;
   const pos = worldBridge.getPlayerPos?.();
-  const scale = 4;
+  // Fit the whole map on screen: beside the legend on wide screens, above it otherwise.
+  const wide = vp.w >= 1024;
+  const availW = wide ? Math.min(vp.w - 380, 720) : vp.w - 70;
+  const availH = vp.h * (wide ? 0.66 : 0.6) - 40;
+  const px = Math.max(2, Math.min(8, availW / map.w, availH / map.h));
   const exits = Object.values(map.regions).filter((r) => r.def.type === 'exit' || (r.def.type === 'shrine' && data.flags['rift_open']));
 
   return (
     <ModalShell title={map.def.name} onClose={() => ui.close()} width={980}>
       <div className="flex min-h-0 flex-col gap-4 lg:flex-row">
-        <div className="pixel-inset relative self-center overflow-auto p-2">
-          <div className="relative" style={{ width: map.w * scale * 2, maxWidth: '100%' }}>
-            <canvas ref={canvasRef} className="pixelated block h-auto w-full" />
+        <div className="pixel-inset relative shrink-0 self-center p-2">
+          <div className="relative" style={{ width: map.w * px, height: map.h * px }}>
+            <canvas ref={canvasRef} className="pixelated block h-full w-full" />
             {pos && (
               <div
                 className="absolute"
@@ -148,7 +153,7 @@ export function MapMenu() {
               </div>
             ))}
           </div>
-          <p className="text-sm text-dim">
+          <p className="kbd-hint text-sm text-dim">
             <Kbd>M</Kbd> or <Kbd>Esc</Kbd> close
           </p>
         </div>

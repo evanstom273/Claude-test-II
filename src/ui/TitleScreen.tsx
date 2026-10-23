@@ -5,19 +5,19 @@ import { SLOT_COUNT, type SaveRecord } from '../db/db';
 import { deleteSave, listSaves } from '../db/saves';
 import { playMusic, sfx } from '../game/audio';
 import { continueLatest, loadSlot, startNewGame } from '../state/session';
-import { Icon, Kbd, Panel, formatTime, useKeys, useListNav } from './common';
+import { Icon, Kbd, Panel, canFullscreen, formatTime, toggleFullscreen, useKeys, useListNav } from './common';
 import { ControlsList, SettingsPanel } from './SettingsPanel';
 
 type View = 'main' | 'new' | 'name' | 'load' | 'settings' | 'controls' | 'credits';
 
 function Logo() {
   return (
-    <div className="mb-8 flex flex-col items-center">
+    <div className="mb-6 flex flex-col items-center sm:mb-8">
       <div className="mb-2 animate-flicker">
         <Icon frame="icon_radiance" size={56} />
       </div>
-      <h1 className="glow-ember text-6xl tracking-wide text-ember-hi sm:text-7xl">Hearthlight</h1>
-      <p className="text-shadow mt-2 text-lg text-parchment/80">The last flame of Emberhold</p>
+      <h1 className="glow-ember text-5xl tracking-wide text-ember-hi sm:text-7xl">Hearthlight</h1>
+      <p className="text-shadow mt-2 text-base text-parchment/80 sm:text-lg">The last flame of Emberhold</p>
     </div>
   );
 }
@@ -193,8 +193,8 @@ export function TitleScreen() {
   };
 
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center bg-gradient-to-b from-ink/30 via-transparent to-ink/80 p-6">
-      <div className="flex w-full max-w-xl flex-col items-center">
+    <div className="safe-pad scroll-thin absolute inset-0 z-20 flex flex-col items-center overflow-y-auto bg-gradient-to-b from-ink/30 via-transparent to-ink/80 p-4 sm:p-6">
+      <div className="my-auto flex w-full max-w-xl flex-col items-center py-4">
         <Logo />
 
         {view === 'main' && (
@@ -216,10 +216,15 @@ export function TitleScreen() {
                 {m.label}
               </button>
             ))}
-            <p className="mt-3 text-center text-sm text-dim">
+            <p className="kbd-hint mt-3 text-center text-sm text-dim">
               <Kbd>↑</Kbd>
               <Kbd>↓</Kbd> choose · <Kbd>Enter</Kbd> select
             </p>
+            {canFullscreen && (
+              <button type="button" tabIndex={-1} onClick={() => toggleFullscreen()} className="hidden cursor-pointer text-center text-sm text-dim underline decoration-dotted touch:block">
+                Play fullscreen
+              </button>
+            )}
           </div>
         )}
 
@@ -243,7 +248,7 @@ export function TitleScreen() {
                 />
               ))}
             </div>
-            <p className="mt-4 text-sm text-dim">
+            <p className="kbd-hint mt-4 text-sm text-dim">
               <Kbd>Enter</Kbd> {view === 'new' ? 'choose' : 'load'}
               {view === 'load' && (
                 <>
@@ -253,6 +258,9 @@ export function TitleScreen() {
               )}{' '}
               · <Kbd>Esc</Kbd> back
             </p>
+            <button type="button" tabIndex={-1} className="pixel-btn mt-4 hidden cursor-pointer px-4 py-2 touch:block" onClick={() => open('main')}>
+              Back
+            </button>
           </Panel>
         )}
 
@@ -296,6 +304,9 @@ export function TitleScreen() {
           <Panel className="w-full animate-rise p-5">
             <h2 className="text-shadow mb-3 text-2xl text-ember-hi">Settings</h2>
             <SettingsPanel onBack={() => open('main')} />
+            <button type="button" tabIndex={-1} className="pixel-btn mt-3 hidden cursor-pointer px-4 py-2 touch:block" onClick={() => open('main')}>
+              Back
+            </button>
           </Panel>
         )}
 
@@ -303,9 +314,12 @@ export function TitleScreen() {
           <Panel className="w-full animate-rise p-5">
             <h2 className="text-shadow mb-3 text-2xl text-ember-hi">Controls</h2>
             <ControlsList />
-            <p className="mt-4 text-sm text-dim">
+            <p className="kbd-hint mt-4 text-sm text-dim">
               <Kbd>Esc</Kbd> back
             </p>
+            <button type="button" tabIndex={-1} className="pixel-btn mt-4 hidden cursor-pointer px-4 py-2 touch:block" onClick={() => open('main')}>
+              Back
+            </button>
           </Panel>
         )}
 
@@ -315,9 +329,12 @@ export function TitleScreen() {
             <p className="mb-2">Hearthlight: an action RPG in five places, three Embers and one very stubborn cat.</p>
             <p className="mb-2 text-dim">Built with React, Vite, TypeScript, Tailwind CSS, Dexie (IndexedDB) and Phaser 4.</p>
             <p className="mb-4 text-dim">Every sprite, tile, tune and sound effect is generated in code at runtime.</p>
-            <p className="text-sm text-dim">
+            <p className="kbd-hint text-sm text-dim">
               <Kbd>Esc</Kbd> back
             </p>
+            <button type="button" tabIndex={-1} className="pixel-btn mx-auto mt-2 hidden cursor-pointer px-4 py-2 touch:block" onClick={() => open('main')}>
+              Back
+            </button>
           </Panel>
         )}
 

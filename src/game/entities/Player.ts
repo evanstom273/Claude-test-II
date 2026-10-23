@@ -177,9 +177,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const speed = BASE_SPEED * game.stats().speed;
     if (ax.x !== 0 || ax.y !== 0) {
       const len = Math.hypot(ax.x, ax.y);
-      this.setVelocity((ax.x / len) * speed, (ax.y / len) * speed);
+      // The touch stick is analogue; keys are always full speed.
+      const mag = ax.analog ? Math.min(1, len) : 1;
+      this.setVelocity((ax.x / len) * speed * mag, (ax.y / len) * speed * mag);
       let f: Facing = this.facing;
-      if (ax.x !== 0 && ax.y === 0) f = ax.x > 0 ? 'right' : 'left';
+      if (ax.analog) f = Math.abs(ax.x) > Math.abs(ax.y) ? (ax.x > 0 ? 'right' : 'left') : ax.y > 0 ? 'down' : 'up';
+      else if (ax.x !== 0 && ax.y === 0) f = ax.x > 0 ? 'right' : 'left';
       else if (ax.y !== 0 && ax.x === 0) f = ax.y > 0 ? 'down' : 'up';
       else {
         // Diagonal: keep the current facing if it's one of the two, else prefer vertical.

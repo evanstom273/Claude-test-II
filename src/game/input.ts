@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { touchInput, type TouchAction } from './touchInput';
 
 export type Action = 'up' | 'down' | 'left' | 'right' | 'attack' | 'bolt' | 'dash' | 'radiance' | 'interact' | 'potion1' | 'potion2' | 'potion3' | 'potion4';
 
@@ -45,6 +46,7 @@ export class Controls {
 
   /** True once per press. Presses are remembered briefly so quick taps aren't lost. */
   pressed(a: Action, bufferMs = 120): boolean {
+    if (a !== 'up' && a !== 'down' && a !== 'left' && a !== 'right' && touchInput.take(a as TouchAction)) return true;
     const t = this.buffered.get(a);
     if (t === undefined) return false;
     if (this.scene.time.now - t > bufferMs) {
@@ -55,16 +57,19 @@ export class Controls {
     return true;
   }
 
-  axis(): { x: number; y: number } {
+  /** Movement input. `analog` is true when it came from the touch stick. */
+  axis(): { x: number; y: number; analog: boolean } {
     const x = (this.down('right') ? 1 : 0) - (this.down('left') ? 1 : 0);
     const y = (this.down('down') ? 1 : 0) - (this.down('up') ? 1 : 0);
-    return { x, y };
+    if (x === 0 && y === 0 && (touchInput.x !== 0 || touchInput.y !== 0)) return { x: touchInput.x, y: touchInput.y, analog: true };
+    return { x, y, analog: false };
   }
 
   /** Ignore presses for a moment, e.g. the key that just closed a menu. */
   suppress(ms = 150) {
     this.suppressUntil = performance.now() + ms;
     this.buffered.clear();
+    touchInput.presses.clear();
   }
 
   reset() {

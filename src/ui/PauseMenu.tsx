@@ -3,7 +3,7 @@ import { sfx } from '../game/audio';
 import { useGameData } from '../state/gameStore';
 import { quitToTitle, saveNow, worldBridge } from '../state/session';
 import { ui } from '../state/uiStore';
-import { Kbd, ModalShell, formatTime, useKeys, useListNav } from './common';
+import { Kbd, ModalShell, canFullscreen, formatTime, toggleFullscreen, useKeys, useListNav } from './common';
 import { ControlsList, SettingsPanel } from './SettingsPanel';
 
 export function PauseMenu() {
@@ -32,6 +32,7 @@ export function PauseMenu() {
     },
     { label: 'Settings', run: () => setSub('settings') },
     { label: 'Controls', run: () => setSub('controls') },
+    ...(canFullscreen ? [{ label: 'Toggle fullscreen', run: () => toggleFullscreen() }] : []),
     { label: 'Quit to title', run: () => setSub('quit') },
   ];
 
@@ -67,7 +68,7 @@ export function PauseMenu() {
   if (!data) return null;
 
   return (
-    <ModalShell title={sub === 'settings' ? 'Settings' : sub === 'controls' ? 'Controls' : 'Paused'} width={520}>
+    <ModalShell title={sub === 'settings' ? 'Settings' : sub === 'controls' ? 'Controls' : 'Paused'} width={520} onClose={sub === null ? () => ui.close() : undefined}>
       {sub === null && (
         <div className="flex flex-col gap-2">
           {items.map((it, i) => (
@@ -92,13 +93,23 @@ export function PauseMenu() {
           </div>
         </div>
       )}
-      {sub === 'settings' && <SettingsPanel onBack={() => setSub(null)} />}
+      {sub === 'settings' && (
+        <>
+          <SettingsPanel onBack={() => setSub(null)} />
+          <button type="button" tabIndex={-1} className="pixel-btn mt-3 hidden cursor-pointer px-4 py-2 touch:block" onClick={() => setSub(null)}>
+            Back
+          </button>
+        </>
+      )}
       {sub === 'controls' && (
         <>
           <ControlsList />
-          <p className="mt-4 text-sm text-dim">
+          <p className="kbd-hint mt-4 text-sm text-dim">
             <Kbd>Esc</Kbd> back
           </p>
+          <button type="button" tabIndex={-1} className="pixel-btn mt-4 hidden cursor-pointer px-4 py-2 touch:block" onClick={() => setSub(null)}>
+            Back
+          </button>
         </>
       )}
       {sub === 'quit' && (

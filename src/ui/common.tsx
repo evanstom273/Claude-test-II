@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { frameDataUrl } from '../game/art/atlas';
 import { sfx } from '../game/audio';
 
@@ -102,6 +102,31 @@ export function useListNav(count: number, index: number, setIndex: (i: number) =
   );
 }
 
+/** The window size, kept up to date. */
+export function useViewport() {
+  const [size, setSize] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }));
+  useEffect(() => {
+    const fn = () => setSize({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, []);
+  return size;
+}
+
+/** Toggle browser fullscreen, where supported. */
+export function toggleFullscreen() {
+  const doc = document as Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => void };
+  const el = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => void };
+  if (document.fullscreenElement || doc.webkitFullscreenElement) {
+    (document.exitFullscreen ?? doc.webkitExitFullscreen)?.call(document);
+  } else {
+    const req = el.requestFullscreen ?? el.webkitRequestFullscreen;
+    void req?.call(el)?.catch?.(() => undefined);
+  }
+}
+
+export const canFullscreen = typeof document !== 'undefined' && !!(document.fullscreenEnabled || (document as unknown as { webkitFullscreenEnabled?: boolean }).webkitFullscreenEnabled);
+
 export function formatTime(ms: number) {
   const s = Math.floor(ms / 1000);
   const h = Math.floor(s / 3600);
@@ -111,15 +136,15 @@ export function formatTime(ms: number) {
 }
 
 export function Kbd({ children }: { children: ReactNode }) {
-  return <span className="mx-0.5 inline-block min-w-5 rounded-[2px] bg-ink px-1.5 py-0.5 text-center font-tiny text-[10px] leading-none text-ember-hi shadow-[0_0_0_1px_var(--color-edge)]">{children}</span>;
+  return <span className="kbd mx-0.5 inline-block min-w-5 rounded-[2px] bg-ink px-1.5 py-0.5 text-center font-tiny text-[10px] leading-none text-ember-hi shadow-[0_0_0_1px_var(--color-edge)]">{children}</span>;
 }
 
 export function ModalShell({ title, children, onClose, width = 720, className = '' }: { title: ReactNode; children: ReactNode; onClose?: () => void; width?: number; className?: string }) {
   return (
-    <div className="absolute inset-0 z-30 flex animate-fade items-center justify-center bg-ink/60 p-4 backdrop-blur-[1px]">
-      <Panel className={`relative flex max-h-full w-full animate-rise flex-col p-5 ${className}`} style={{ maxWidth: width }}>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-shadow text-2xl text-ember-hi">{title}</h2>
+    <div className="safe-pad absolute inset-0 z-30 flex animate-fade items-center justify-center bg-ink/60 backdrop-blur-[1px]">
+      <Panel className={`relative m-3 flex max-h-[calc(100%-1.5rem)] w-full animate-rise flex-col p-3 sm:m-4 sm:p-5 ${className}`} style={{ maxWidth: width }}>
+        <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
+          <h2 className="text-shadow text-xl text-ember-hi sm:text-2xl">{title}</h2>
           {onClose && (
             <button
               type="button"
@@ -128,13 +153,14 @@ export function ModalShell({ title, children, onClose, width = 720, className = 
                 sfx('back');
                 onClose();
               }}
-              className="cursor-pointer px-2 text-dim hover:text-parchment"
+              className="cursor-pointer px-2 py-1 text-dim hover:text-parchment"
             >
-              <Kbd>Esc</Kbd> close
+              <Kbd>Esc</Kbd> <span className="touch:hidden">close</span>
+              <span className="hidden text-2xl leading-none touch:inline">✕</span>
             </button>
           )}
         </div>
-        {children}
+        <div className="scroll-thin min-h-0 flex-1 overflow-y-auto">{children}</div>
       </Panel>
     </div>
   );
