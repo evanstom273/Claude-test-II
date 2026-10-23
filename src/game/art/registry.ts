@@ -1,3 +1,4 @@
+import { HERO_PALETTE, heroFrame } from './hero';
 import { humanFrame, withAccessory, PAL, ROBE, BEARD, APRON, STRAW_HAT, WIDE_HAT, HOOD, HELMET, CAP, BUN, type Accessory, type Dir, type Pose } from './humanoid';
 import { SLIME, BAT, WOLF, THORNLING, SKELETON, CRAWLER, WISP, SHADE, CRAB, THORNMOTHER, COLOSSUS, ABBESS, HOLLOW_KING, MONSTER_PALETTES } from './monsters';
 import * as O from './objects';
@@ -26,7 +27,6 @@ function add(key: string, rows: string[], palette: Palette = {}) {
 // ---- Humanoids -----------------------------------------------------------------
 
 export const CHARACTERS: Record<string, { palette: Palette; acc: Accessory[] }> = {
-  player: { palette: PAL.player, acc: [] },
   maren: { palette: PAL.maren, acc: [BUN, ROBE] },
   bram: { palette: PAL.bram, acc: [BEARD, APRON] },
   ivo: { palette: PAL.ivo, acc: [WIDE_HAT] },
@@ -42,17 +42,20 @@ export const CHARACTERS: Record<string, { palette: Palette; acc: Accessory[] }> 
 const DIRS: Dir[] = ['down', 'up', 'side'];
 const POSES: Pose[] = ['idle', 'a', 'b'];
 
-for (const [id, ch] of Object.entries(CHARACTERS)) {
+function addWalker(id: string, frame: (dir: Dir, pose: Pose) => string[], palette: Palette) {
   for (const dir of DIRS) {
-    for (const pose of POSES) {
-      let rows = humanFrame(dir, pose);
-      for (const acc of ch.acc) rows = withAccessory(rows, acc, dir);
-      add(`${id}_${dir}_${pose}`, rows, ch.palette);
-    }
+    for (const pose of POSES) add(`${id}_${dir}_${pose}`, frame(dir, pose), palette);
     anims.push({ key: `${id}_walk_${dir}`, frames: [`${id}_${dir}_a`, `${id}_${dir}_idle`, `${id}_${dir}_b`, `${id}_${dir}_idle`], fps: 9 });
     anims.push({ key: `${id}_idle_${dir}`, frames: [`${id}_${dir}_idle`], fps: 1 });
   }
 }
+
+for (const [id, ch] of Object.entries(CHARACTERS)) {
+  addWalker(id, (dir, pose) => ch.acc.reduce((rows, acc) => withAccessory(rows, acc, dir), humanFrame(dir, pose)), ch.palette);
+}
+
+// The player is drawn at 32x32 from shapes and lighting rules (see hero.ts) and shown at half scale.
+addWalker('player', heroFrame, HERO_PALETTE);
 
 // ---- Monsters --------------------------------------------------------------------
 

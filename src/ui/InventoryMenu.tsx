@@ -122,8 +122,8 @@ export function InventoryMenu() {
         {/* Character */}
         <div className="pixel-inset flex w-full shrink-0 flex-col gap-3 p-3 md:w-64">
           <div className="flex items-center gap-3">
-            <div className="pixel-panel flex h-16 w-16 items-center justify-center bg-night">
-              <Icon frame="player_down_idle" size={48} />
+            <div className="pixel-panel flex h-20 w-20 items-center justify-center bg-night">
+              <Icon frame="player_down_idle" size={64} />
             </div>
             <div>
               <div className="text-xl">{data.playerName}</div>
