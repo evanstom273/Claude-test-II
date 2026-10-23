@@ -39,6 +39,12 @@ npm run typecheck
 
 Rest at the Hearthlight in the village square to heal and save.
 
+On phones, tablets and foldables, on-screen touch controls switch on automatically: drag anywhere on the left half to move, use the sword and ability buttons on the right, and tap the glowing button that appears to talk or open things. They can be toggled in Settings. Portrait and landscape both work.
+
+## Deploying
+
+`.github/workflows/deploy.yml` builds the game and publishes `dist/` to GitHub Pages on every push to `main` (Pages source: GitHub Actions). The build uses relative paths, so it works from the repo's Pages sub-path.
+
 ## Layout
 
 - `src/game`: Phaser scenes, entities, bosses, lighting, generated art and synthesised audio
