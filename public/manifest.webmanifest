@@ -1,0 +1,12 @@
+{
+  "name": "Hearthlight",
+  "short_name": "Hearthlight",
+  "description": "Recover the three Embers and relight the last flame of Emberhold.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0b0a12",
+  "theme_color": "#0b0a12",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
