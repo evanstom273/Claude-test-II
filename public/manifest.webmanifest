@@ -1,0 +1,19 @@
+{
+  "name": "LOWLIFE",
+  "short_name": "LOWLIFE",
+  "description": "An open-world, top-down crime game. Grimsport, after dark.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0b0a12",
+  "theme_color": "#0b0a12",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
