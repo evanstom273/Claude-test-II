@@ -110,6 +110,7 @@ export class Fx {
   afterimage(src: Phaser.GameObjects.Sprite, tint = 0xffb040) {
     const img = this.scene.add
       .image(src.x, src.y, src.texture.key, src.frame.name)
+      .setScale(src.scaleX, src.scaleY)
       .setFlipX(src.flipX)
       .setDepth(src.depth - 1)
       .setTint(tint)

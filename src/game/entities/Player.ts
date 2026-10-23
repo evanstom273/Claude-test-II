@@ -4,9 +4,11 @@ import { game } from '../../state/gameStore';
 import { mitigate } from '../../state/progression';
 import type { Facing } from '../../state/types';
 import { ui } from '../../state/uiStore';
+import { HERO_SIZE } from '../art/hero';
 import { sfx } from '../audio';
 import type { Controls } from '../input';
 import { ATLAS } from '../textures';
+import { TILE } from '../world/render';
 import type { World } from '../world/types';
 import type { Enemy } from './Enemy';
 
@@ -22,6 +24,8 @@ const RADIANCE_COST = 12;
 const RADIANCE_COOLDOWN = 4000;
 const RADIANCE_RADIUS = 64;
 const HURT_INVULN = 900;
+/** The player's frames are drawn at a finer resolution than the world, then scaled to one tile. */
+const SCALE = TILE / HERO_SIZE;
 
 export const FACING_VEC: Record<Facing, { x: number; y: number }> = {
   down: { x: 0, y: 1 },
@@ -61,7 +65,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.controls = controls;
     world.add.existing(this);
     world.physics.add.existing(this);
-    this.body.setSize(10, 7).setOffset(3, 9);
+    this.setScale(SCALE);
+    // Body size and offset are in frame pixels, so divide by the scale to keep a one-tile hitbox.
+    this.body.setSize(10 / SCALE, 7 / SCALE).setOffset(3 / SCALE, 9 / SCALE);
     this.setCollideWorldBounds(true);
     this.shadow = world.add.image(x, y + 7, ATLAS, 'shadow').setDepth(-5000);
     this.lastSafe = { x, y };
@@ -337,11 +343,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setVelocity(0, 0);
     this.world.tweens.add({
       targets: this,
-      scale: 0.1,
+      scale: 0.1 * SCALE,
       angle: 200,
       duration: 380,
       onComplete: () => {
-        this.setScale(1).setAngle(0);
+        this.setScale(SCALE).setAngle(0);
         this.setPosition(this.lastSafe.x, this.lastSafe.y);
         this.state = 'normal';
         this.invulnUntil = this.world.time.now + HURT_INVULN;
