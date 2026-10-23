@@ -15,6 +15,8 @@ export function furnish(c: CityMap, b: Building, r: () => number, addProp: AddPr
   const isFloor = (x: number, y: number) => mine(x, y) && at(x, y) === T.FLOOR;
   const isWall = (x: number, y: number) => at(x, y) === T.WALL || at(x, y) === T.DOOR;
   const taken = new Set<number>();
+  /** Tiles furniture blocks people on. */
+  const solid = new Set<number>();
   const key = (x: number, y: number) => y * W + x;
 
   // Keep the way in clear: around the door and any internal doorway.
@@ -45,7 +47,11 @@ export function furnish(c: CityMap, b: Building, r: () => number, addProp: AddPr
     const tw = extra.tw ?? 1;
     const th = extra.th ?? 1;
     for (let yy = y; yy < y + th; yy++) for (let xx = x; xx < x + tw; xx++) if (!free(xx, yy)) return null;
-    for (let yy = y; yy < y + th; yy++) for (let xx = x; xx < x + tw; xx++) taken.add(key(xx, yy));
+    for (let yy = y; yy < y + th; yy++)
+      for (let xx = x; xx < x + tw; xx++) {
+        taken.add(key(xx, yy));
+        if (block & B.PED) solid.add(key(xx, yy));
+      }
     return addProp(kind, x, y, block, { building: b.id, ...extra });
   };
   /** Place up to n of a thing against walls. */
@@ -79,23 +85,55 @@ export function furnish(c: CityMap, b: Building, r: () => number, addProp: AddPr
     const cx = b.door.x + inward[0] * 3;
     const cy = b.door.y + inward[1] * 3;
     const start = -Math.floor(len / 2) + (r() < 0.5 ? 1 : -1) * 2;
-    let placedTill = false;
+    const tiles: [number, number][] = [];
     for (let k = 0; k < len; k++) {
       const x = cx + along[0] * (start + k);
       const y = cy + along[1] * (start + k);
-      if (!isFloor(x, y) || taken.has(key(x, y))) continue;
-      const p = put(!placedTill ? 'register' : kind, x, y, SOLID);
-      if (p && !placedTill) {
-        placedTill = true;
-        const px = x + inward[0];
-        const py = y + inward[1];
-        if (isFloor(px, py)) {
-          b.post = { x: px, y: py };
-          taken.add(key(px, py));
-        }
+      if (isFloor(x, y) && !taken.has(key(x, y))) tiles.push([x, y]);
+    }
+    if (!tiles.length) return;
+    const [tx, ty] = tiles[0];
+    const post = { x: tx + inward[0], y: ty + inward[1] };
+    if (!isFloor(post.x, post.y)) return;
+    // The shopkeeper has to be able to get out from behind it (and you in):
+    // trim the far end of the counter until there's a way round, then keep that way clear.
+    let route = walkway(post, new Set(tiles.map(([x, y]) => key(x, y))));
+    while (!route && tiles.length > 1) {
+      tiles.pop();
+      route = walkway(post, new Set(tiles.map(([x, y]) => key(x, y))));
+    }
+    if (!route) return;
+    tiles.forEach(([x, y], i) => put(i === 0 ? 'register' : kind, x, y, SOLID));
+    b.post = post;
+    taken.add(key(post.x, post.y));
+    for (const k of route) taken.add(k);
+  };
+
+  /** Tiles from a point to just inside the front door, walking round `extra` and anything solid. */
+  function walkway(from: { x: number; y: number }, extra: Set<number>): number[] | null {
+    const v = { n: [0, 1], s: [0, -1], w: [1, 0], e: [-1, 0] }[b.door.side];
+    const goal = key(b.door.x + v[0], b.door.y + v[1]);
+    const startK = key(from.x, from.y);
+    const prev = new Map<number, number>([[startK, -1]]);
+    const queue = [startK];
+    while (queue.length) {
+      const k = queue.shift()!;
+      if (k === goal) {
+        const out: number[] = [];
+        for (let i = k; i !== -1; i = prev.get(i)!) out.push(i);
+        return out;
+      }
+      const x = k % W;
+      const y = (k - x) / W;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nk = key(x + dx, y + dy);
+        if (prev.has(nk) || !isFloor(x + dx, y + dy) || solid.has(nk) || extra.has(nk)) continue;
+        prev.set(nk, k);
+        queue.push(nk);
       }
     }
-  };
+    return null;
+  }
 
   switch (b.kind) {
     case 'house':
