@@ -110,6 +110,18 @@ function engage(w: CityScene, a: Actor, t: Actor) {
   if (t.role === 'player') a.hostile = true;
 }
 
+/** A horn blast: people in the road ahead hop out of the way. Nobody calls the police over it. */
+export function scatter(w: CityScene, x: number, y: number, r: number) {
+  for (const a of w.actors) {
+    if (a.dead || a.car || a.role === 'player' || a.state === 'fight') continue;
+    if (a.role !== 'civ' && a.role !== 'gang') continue;
+    if (Math.hypot(a.x - x, a.y - y) > r) continue;
+    a.state = 'flee';
+    a.goal = { x, y };
+    a.stateUntil = w.now + 900 + Math.random() * 600;
+  }
+}
+
 function flee(w: CityScene, a: Actor, x: number, y: number) {
   a.state = 'flee';
   a.goal = { x, y };

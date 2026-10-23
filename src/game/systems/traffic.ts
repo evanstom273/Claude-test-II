@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
 import { sfx } from '../audio';
-import { B, LANE, T, TILE, blockAt, blockedPx, type CityMap } from '../city/tiles';
+import { B, LANE, T, TILE, blockAt, blockedPx, lineOfSight, type CityMap } from '../city/tiles';
 import type { Car } from '../entities/Car';
 import type { CityScene } from '../scenes/CityScene';
 import { distVol } from './combat';
+import { roadPath } from './route';
 
 /*
  * Traffic drives on the left, as it should. Each road tile knows which way its
@@ -150,7 +151,7 @@ export function driveTraffic(w: CityScene, car: Car, dt: number) {
   }
 }
 
-/** Police: drive at the target, steering round walls with feelers, reversing when stuck. */
+/** Police: follow a route along the streets to the target, cutting straight at it once there's a clear run. */
 export function drivePursuit(w: CityScene, car: Car, tx: number, ty: number, dt: number) {
   const ai = car.ai!;
   const c = w.city;
@@ -159,23 +160,50 @@ export function drivePursuit(w: CityScene, car: Car, tx: number, ty: number, dt:
   if (w.now < ai.reverseUntil) {
     car.input.throttle = -1;
     car.input.handbrake = false;
+    car.input.steer = 0;
     car.angle += ai.dir * 1.8 * dt;
     return;
   }
-  let desired = Math.atan2(ty - car.y, tx - car.x);
-  // Feelers: if the way ahead is blocked, try angling off to whichever side is clearer.
+  const clear = dist < 260 && lineOfSight(c, car.x, car.y, tx, ty, B.CAR);
+  let aimX = tx;
+  let aimY = ty;
+  if (!clear) {
+    if (!ai.path.length || w.now > (ai.repathAt ?? 0)) {
+      ai.path = roadPath(c, car.x, car.y, tx, ty) ?? [];
+      ai.repathAt = w.now + 900 + Math.random() * 400;
+    }
+    // Drop waypoints we've reached, then aim at the furthest one in a clear line (up to a few tiles on).
+    while (ai.path.length && Math.hypot(ai.path[0].x - car.x, ai.path[0].y - car.y) < 14) ai.path.shift();
+    let k = 0;
+    for (let i = Math.min(ai.path.length - 1, 7); i > 0; i--) {
+      if (lineOfSight(c, car.x, car.y, ai.path[i].x, ai.path[i].y, B.CAR)) {
+        k = i;
+        break;
+      }
+    }
+    if (ai.path[k]) {
+      aimX = ai.path[k].x;
+      aimY = ai.path[k].y;
+    }
+  } else ai.path = [];
+  let desired = Math.atan2(aimY - car.y, aimX - car.x);
+  // Feelers: if the way ahead is blocked, angle off to whichever side is clearer.
   const feel = (a: number, d: number) => {
     for (let s = 8; s <= d; s += 6) if (blockedPx(c, car.x + Math.cos(a) * s, car.y + Math.sin(a) * s, B.CAR)) return s;
     return d;
   };
-  const straight = feel(desired, 40);
-  if (straight < 40) {
-    const l = feel(desired - 0.8, 40);
-    const r = feel(desired + 0.8, 40);
-    desired += l > r ? -0.8 : 0.8;
+  if (feel(desired, 26) < 26) {
+    const l = feel(desired - 0.7, 30);
+    const r = feel(desired + 0.7, 30);
+    desired += l > r ? -0.5 : 0.5;
   }
+  const off = Math.abs(Phaser.Math.Angle.Wrap(desired - car.angle));
   turnToward(car, desired, 1.5 + Math.min(1, Math.abs(speed) / 60) * 4.2, dt);
-  const want = dist < 50 ? 0 : dist < 120 ? 90 : car.maxSpeed * 0.92;
+  // Slow down for sharp turns so the car doesn't plough into the corner.
+  let want = clear ? (dist < 50 ? 0 : dist < 120 ? 90 : car.maxSpeed * 0.92) : car.maxSpeed * (off > 1.2 ? 0.35 : off > 0.6 ? 0.6 : 0.88);
+  // Hit something while chasing: brake rather than shove through it.
+  const ahead = clearAhead(w, car, 22);
+  if (ahead.blocked && !ahead.byPlayer && ahead.d < 8) want = Math.min(want, 20);
   car.input.steer = 0;
   car.input.throttle = speed < want ? 1 : speed > want + 15 ? -1 : 0;
   car.input.handbrake = want === 0 && speed < 20;
@@ -186,6 +214,7 @@ export function drivePursuit(w: CityScene, car: Car, tx: number, ty: number, dt:
     ai.stuck = 0;
     ai.reverseUntil = w.now + 700;
     ai.dir = Math.random() < 0.5 ? -1 : 1;
+    ai.repathAt = 0;
   }
 }
 

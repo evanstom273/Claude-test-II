@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { settingsStore } from '../db/settings';
 import { sfx } from './audio';
-import { ATLAS } from './textures';
+import { ATLAS, ROT } from './textures';
 
 export const FONT = '"Pixelify Sans", "Silkscreen", monospace';
 
@@ -83,7 +83,7 @@ export class Fx {
   }
 
   muzzle(x: number, y: number, angle: number) {
-    const f = this.scene.add.image(x, y, ATLAS, 'flash').setRotation(angle).setDepth(14001).setBlendMode(Phaser.BlendModes.ADD);
+    const f = this.scene.add.image(x, y, ROT, 'flash').setRotation(angle).setDepth(14001).setBlendMode(Phaser.BlendModes.ADD);
     this.scene.time.delayedCall(45, () => f.destroy());
   }
 

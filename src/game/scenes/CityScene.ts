@@ -16,13 +16,13 @@ import { Car } from '../entities/Car';
 import { Fx } from '../fx';
 import { Controls } from '../input';
 import { Lighting, type Light } from '../Lighting';
-import { gangHatesPlayer, updateNpc } from '../systems/ai';
+import { gangHatesPlayer, scatter, updateNpc } from '../systems/ai';
 import { attack, collectPickups, distVol, dropPickup, explode, hurtActor, hurtCar, type Pickup } from '../systems/combat';
 import { Jobs } from '../systems/jobs';
 import { Police } from '../systems/police';
 import { Population, reroute } from '../systems/population';
 import { drivePursuit, driveTraffic } from '../systems/traffic';
-import { ATLAS } from '../textures';
+import { ATLAS, ROT } from '../textures';
 import type { Crime, CrimeKind, World } from '../world';
 import { fitZoom } from './zoom';
 
@@ -124,7 +124,7 @@ export class CityScene extends Phaser.Scene implements World {
     this.makeLighting();
     this.scale.on('resize', this.makeLighting, this);
 
-    this.arrow = this.add.image(0, 0, ATLAS, 'arrow').setDepth(16500).setVisible(false);
+    this.arrow = this.add.image(0, 0, ROT, 'arrow').setDepth(16500).setVisible(false);
     this.ring = this.add.image(0, 0, ATLAS, 'ring').setDepth(-40000).setTint(0xffd84f).setVisible(false).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({ targets: this.ring, alpha: { from: 0.9, to: 0.3 }, scale: { from: 0.35, to: 0.55 }, duration: 700, yoyo: true, repeat: -1 });
 
@@ -380,7 +380,8 @@ export class CityScene extends Phaser.Scene implements World {
     car.input.handbrake = c.down('handbrake');
     if (c.pressed('horn')) {
       sfx('horn');
-      this.crime('assault', this.player, car.x, car.y, undefined, 0);
+      const ahead = car.local(car.len / 2 + 24, 0);
+      scatter(this, ahead.x, ahead.y, 40);
     }
     if (c.pressed('radio')) this.tuneRadio(1);
     if (c.pressed('interact')) this.exitCar();

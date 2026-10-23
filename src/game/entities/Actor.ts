@@ -3,7 +3,7 @@ import type { Faction, Look } from '../../data/cast';
 import { WEAPONS } from '../../data/weapons';
 import type { Point, WeaponId } from '../../state/types';
 import { B, TILE, blockAt } from '../city/tiles';
-import { ATLAS } from '../textures';
+import { ATLAS, ROT } from '../textures';
 import type { World } from '../world';
 import type { Car } from './Car';
 
@@ -117,7 +117,7 @@ export class Actor {
       this.held = null;
       return;
     }
-    if (!this.held) this.held = this.world.gfx.add.image(this.x, this.y, ATLAS, frame).setScale(PERSON_SCALE).setOrigin(0.18, 0.5);
+    if (!this.held) this.held = this.world.gfx.add.image(this.x, this.y, ROT, frame).setScale(PERSON_SCALE).setOrigin(0.18, 0.5);
     else this.held.setFrame(frame);
   }
 

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { CAR_SPECS, type CarModel, type CarSpec } from '../art/cars';
 import { carFrameKey } from '../art/registry';
 import { B, TILE, blockAt } from '../city/tiles';
-import { ATLAS } from '../textures';
+import { ROT } from '../textures';
 import type { World } from '../world';
 import type { Actor } from './Actor';
 
@@ -26,6 +26,8 @@ export interface CarAI {
   reverseUntil: number;
   honkAt: number;
   cruise: number;
+  /** When a pursuing car next works out its route. */
+  repathAt?: number;
 }
 
 /**
@@ -83,8 +85,8 @@ export class Car {
     this.hp = this.spec.hp;
     this.maxHp = this.spec.hp;
     const s = world.gfx;
-    this.shadow = s.add.image(x, y, ATLAS, 'shadow_car').setDepth(-50000).setScale((this.len + 4) / 28, (this.wid + 3) / 16);
-    this.sprite = s.add.image(x, y, ATLAS, carFrameKey(model, colour)).setScale(CAR_SCALE);
+    this.shadow = s.add.image(x, y, ROT, 'shadow_car').setDepth(-50000).setScale((this.len + 4) / 28, (this.wid + 3) / 16);
+    this.sprite = s.add.image(x, y, ROT, carFrameKey(model, colour)).setScale(CAR_SCALE);
     this.sync();
   }
 
@@ -164,7 +166,7 @@ export class Car {
       this.lastSkidAt = this.world.now;
       for (const side of [-1, 1]) {
         const p = this.local(-this.len * 0.3, side * this.wid * 0.35);
-        const m = this.world.gfx.add.image(p.x, p.y, ATLAS, 'skid').setRotation(this.angle).setDepth(-60000);
+        const m = this.world.gfx.add.image(p.x, p.y, ROT, 'skid').setRotation(this.angle).setDepth(-60000);
         this.world.decals.push({ obj: m, at: this.world.now });
       }
     }
